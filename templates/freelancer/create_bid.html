@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Bid - {{ post.title }} - FreelanceMatch{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('browse_posts') }}">Projects</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('view_post', post_id=post.id) }}">{{ post.title[:40] }}{% if post.title|length > 40 %}...{% endif %}</a></li>
+                <li class="breadcrumb-item active">Submit Bid</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Submit Your Bid</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.amount.label(class="form-label") }}
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-rupee-sign"></i></span>
+                            {% if form.amount.errors %}
+                                {{ form.amount(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.amount.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.amount(class="form-control") }}
+                            {% endif %}
+                        </div>
+                        <div class="form-text">Your total bid amount for the entire project</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.delivery_time.label(class="form-label") }}
+                        {% if form.delivery_time.errors %}
+                            {{ form.delivery_time(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.delivery_time.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.delivery_time(class="form-control") }}
+                        {% endif %}
+                        <div class="form-text">How long it will take you to complete the project (e.g. "1 week", "10 days")</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        {{ form.proposal.label(class="form-label") }}
+                        {% if form.proposal.errors %}
+                            {{ form.proposal(class="form-control is-invalid", rows=8) }}
+                            <div class="invalid-feedback">
+                                {% for error in form.proposal.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.proposal(class="form-control", rows=8) }}
+                        {% endif %}
+                        <div class="form-text">Explain why you're the right freelancer for this project (50-1000 characters)</div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Back to Project
+                        </a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Project Summary -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Project Summary</h5>
+            </div>
+            <div class="card-body">
+                <h6>{{ post.title }}</h6>
+                <div class="mb-3">
+                    <span class="badge bg-secondary">{{ post.recommended_domain }}</span>
+                    <span class="ms-2"><i class="fas fa-rupee-sign"></i> {{ post.budget }}</span>
+                    <span class="ms-2"><i class="far fa-clock"></i> {{ post.duration }}</span>
+                </div>
+                <p class="small">{{ post.description|truncate(150) }}</p>
+                <div class="mb-3">
+                    <p class="mb-1 small fw-medium">Required Skills:</p>
+                    <div>
+                        {% for skill in post.skills.split(',')[:5] %}
+                            <span class="badge bg-light text-dark me-1 mb-1">{{ skill.strip() }}</span>
+                        {% endfor %}
+                        {% if post.skills.split(',')|length > 5 %}
+                            <span class="badge bg-light text-dark">+{{ post.skills.split(',')|length - 5 }} more</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="text-muted small">
+                    <i class="fas fa-user me-1"></i> Posted by 
+                    {% if post.client %}
+                        {{ post.client.company_name or post.client.user.username() }}
+                    {% elif post.client_id %}
+                        Client ID: {{ post.client_id }}
+                    {% else %}
+                        Unknown Client
+                    {% endif %}<br>
+                    <i class="far fa-calendar-alt me-1"></i> Posted {% if post.created_at is string %}{{ post.created_at }}{% else %}{{ post.created_at.strftime('%d %b %Y') }}{% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bid Tips -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Tips for a Winning Bid</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-3">
+                        <div class="d-flex">
+                            <div class="me-2 text-primary">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Be Specific</h6>
+                                <p class="small text-muted">Explain how you'll approach the project and highlight your relevant experience.</p>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="mb-3">
+                        <div class="d-flex">
+                            <div class="me-2 text-primary">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Set a Competitive Rate</h6>
+                                <p class="small text-muted">Consider the complexity of the project and your experience level when setting your bid amount.</p>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="mb-3">
+                        <div class="d-flex">
+                            <div class="me-2 text-primary">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Address Client Needs</h6>
+                                <p class="small text-muted">Show that you understand the client's requirements and how you can solve their problems.</p>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

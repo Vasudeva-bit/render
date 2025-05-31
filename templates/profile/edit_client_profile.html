@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile - FreelanceMatch{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>Edit Your Profile</h1>
+        <p class="text-muted">Update your client profile information</p>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <a href="{{ url_for('view_profile') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Profile
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Profile Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="" enctype="multipart/form-data">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.company_name.label(class="form-label") }}
+                        {% if form.company_name.errors %}
+                            {{ form.company_name(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.company_name.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.company_name(class="form-control") }}
+                        {% endif %}
+                        <div class="form-text">Your company or organization name</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.industry.label(class="form-label") }}
+                        {% if form.industry.errors %}
+                            {{ form.industry(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.industry.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.industry(class="form-control") }}
+                        {% endif %}
+                        <div class="form-text">Your business industry (e.g. "Technology", "E-commerce", "Education")</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.website.label(class="form-label") }}
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-globe"></i></span>
+                            {% if form.website.errors %}
+                                {{ form.website(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.website.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.website(class="form-control") }}
+                            {% endif %}
+                        </div>
+                        <div class="form-text">Your company website URL</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {% if form.description.errors %}
+                            {{ form.description(class="form-control is-invalid", rows=6) }}
+                            <div class="invalid-feedback">
+                                {% for error in form.description.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.description(class="form-control", rows=6) }}
+                        {% endif %}
+                        <div class="form-text">Describe your company, what you do, and the type of projects you typically need</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.location.label(class="form-label") }}
+                        {% if form.location.errors %}
+                            {{ form.location(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.location.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.location(class="form-control") }}
+                        {% endif %}
+                        <div class="form-text">Your company location (e.g. "Mumbai, India")</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        {{ form.profile_pic.label(class="form-label") }}
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-image"></i></span>
+                            {{ form.profile_pic(class="form-control") }}
+                        </div>
+                        {% if form.profile_pic.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.profile_pic.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Upload a company logo or profile picture (JPG, PNG only)</div>                        <div class="mt-2">
+                            <img src="{{ url_for('serve_profile_image', image_id=current_user.profile_pic()) }}" 
+                                 class="rounded border" width="100" height="100" alt="Current profile picture">
+                            <small class="d-block text-muted mt-1">Current profile picture</small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        {{ form.submit(class="btn btn-primary btn-lg") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Profile Completion Tips</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-3">
+                        <div class="d-flex">
+                            <div class="me-2 text-primary">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Company Details</h6>
+                                <p class="small text-muted">Provide accurate information about your company to build trust with freelancers.</p>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="mb-3">
+                        <div class="d-flex">
+                            <div class="me-2 text-primary">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Clear Description</h6>
+                                <p class="small text-muted">Describe your business clearly to attract the right talent for your projects.</p>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="mb-3">
+                        <div class="d-flex">
+                            <div class="me-2 text-primary">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Add Your Website</h6>
+                                <p class="small text-muted">Include your website to let freelancers learn more about your company.</p>
+                            </div>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="d-flex">
+                            <div class="me-2 text-primary">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Company Logo</h6>
+                                <p class="small text-muted">Upload your company logo to make your profile more professional.</p>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="card-title mb-0">What Freelancers See</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">Freelancers will see your profile information when:</p>
+                <ul class="small">
+                    <li>You post a new project</li>
+                    <li>They view your project details</li>
+                    <li>You've accepted their bid on a project</li>
+                </ul>
+                <p class="text-muted small">A complete profile increases the likelihood of attracting quality freelancers to your projects.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

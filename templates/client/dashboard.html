@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Client Dashboard - FreelanceMatch{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <h1 class="mb-0">Welcome, {{ current_user.username() }}</h1>
+        <p class="text-muted">
+            {% if client.company_name %}
+                {{ client.company_name }} • {{ client.industry }}
+            {% else %}
+                Complete your profile to get started
+            {% endif %}
+        </p>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <a href="{{ url_for('create_post') }}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-1"></i> Post a New Project
+        </a>
+    </div>
+</div>
+
+<!-- Dashboard Stats -->
+<div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                        <i class="fas fa-briefcase text-primary"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-0">Active Projects</h6>
+                        <h3 class="mb-0">{{ posts|selectattr('status', 'equalto', 'open')|list|length }}</h3>
+                    </div>
+                </div>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-outline-primary w-100">View All Projects</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                        <i class="fas fa-hand-paper text-success"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-0">New Bids</h6>
+                        <h3 class="mb-0">{{ new_bids }}</h3>
+                    </div>
+                </div>
+                <a href="javascript:void(0);" class="btn btn-sm btn-outline-success w-100">Review Bids</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
+                        <i class="fas fa-tasks text-info"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-0">Ongoing Projects</h6>
+                        <h3 class="mb-0">{{ assigned_projects }}</h3>
+                    </div>
+                </div>
+                <a href="javascript:void(0);" class="btn btn-sm btn-outline-info w-100">Manage Projects</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Project Listings -->
+<div class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Your Projects</h2>
+        <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown">
+                Filter Projects
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+                <li><a class="dropdown-item" href="#">All Projects</a></li>
+                <li><a class="dropdown-item" href="#">Open</a></li>
+                <li><a class="dropdown-item" href="#">Assigned</a></li>
+                <li><a class="dropdown-item" href="#">Completed</a></li>
+            </ul>
+        </div>
+    </div>
+
+    {% if posts %}
+        <div class="card shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Project Title</th>
+                            <th>Domain</th>
+                            <th>Budget</th>
+                            <th>Duration</th>
+                            <th>Status</th>
+                            <th>Posted Date</th>
+                            <th>Bids</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for post in posts %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('view_post', post_id=post.id) }}" class="text-decoration-none fw-medium">
+                                        {{ post.title }}
+                                    </a>
+                                </td>
+                                <td><span class="badge bg-secondary">{{ post.recommended_domain }}</span></td>
+                                <td><i class="fas fa-rupee-sign"></i> {{ post.budget }}</td>
+                                <td>{{ post.duration }}</td>
+                                <td>
+                                    {% if post.status == 'open' %}
+                                        <span class="badge bg-success">Open</span>
+                                    {% elif post.status == 'assigned' %}
+                                        <span class="badge bg-info">Assigned</span>
+                                    {% elif post.status == 'completed' %}
+                                        <span class="badge bg-primary">Completed</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ post.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ post.created_at.strftime('%d %b %Y') }}</td>
+                                <td>
+                                    {% set pending_bids = post.bids|selectattr('status', 'equalto', 'pending')|list|length %}
+                                    <span class="badge bg-light text-dark">
+                                        {{ post.bids|length }} Total
+                                    </span>
+                                    {% if pending_bids > 0 %}
+                                        <span class="ms-1 badge bg-warning text-dark">
+                                            {{ pending_bids }} New
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if post.status == 'assigned' %}
+                                            <a href="{{ url_for('chat', post_id=post.id) }}" class="btn btn-sm btn-outline-info" title="Chat with Freelancer">
+                                                <i class="fas fa-comments"></i>
+                                            </a>
+                                            <a href="{{ url_for('complete_project', post_id=post.id) }}" class="btn btn-sm btn-outline-success">
+                                                <i class="fas fa-check-circle"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="card shadow-sm">
+            <div class="card-body text-center p-5">
+                <img src="{{ url_for('static', filename='img/empty-projects.svg') }}" alt="No projects" class="mb-3" width="120">
+                <h5>No Projects Yet</h5>
+                <p class="text-muted">You haven't posted any projects yet.</p>
+                <a href="{{ url_for('create_post') }}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-1"></i> Post Your First Project
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Tips and Resources -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Tips for Getting Great Results</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="d-flex">
+                    <div class="me-3 text-primary">
+                        <i class="fas fa-file-alt fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6>Write Clear Requirements</h6>
+                        <p class="small text-muted">Be detailed about what you need. Clear requirements attract better proposals.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex">
+                    <div class="me-3 text-primary">
+                        <i class="fas fa-rupee-sign fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6>Set Realistic Budgets</h6>
+                        <p class="small text-muted">Research market rates for your project type to attract qualified professionals.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex">
+                    <div class="me-3 text-primary">
+                        <i class="fas fa-comments fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6>Communicate Effectively</h6>
+                        <p class="small text-muted">Respond promptly to bids and questions to keep freelancers engaged.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

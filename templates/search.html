@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results - FreelanceMatch{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>Search Results</h1>
+        <p class="text-muted">
+            {% if query %}
+                Search results for "{{ query }}" in {{ search_type }}
+            {% else %}
+                Search for freelancers or projects
+            {% endif %}
+        </p>
+    </div>
+    <div class="col-md-4">
+        <form action="{{ url_for('search') }}" method="GET" class="d-flex">
+            <div class="input-group">
+                <input type="text" class="form-control" name="q" value="{{ query }}" placeholder="Search...">
+                <select class="form-select" name="type" style="max-width: 150px;">
+                    <option value="freelancers" {% if search_type == 'freelancers' %}selected{% endif %}>Freelancers</option>
+                    <option value="projects" {% if search_type == 'projects' %}selected{% endif %}>Projects</option>
+                </select>
+                <button class="btn btn-primary" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if query %}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+                {% if search_type == 'freelancers' %}
+                    Freelancers
+                {% else %}
+                    Projects
+                {% endif %}
+            </h5>
+            <span class="badge bg-primary">{{ results|length }} results</span>
+        </div>
+        
+        {% if results %}
+            <div class="card-body p-0">
+                {% if search_type == 'freelancers' %}
+                    <div class="row g-0">
+                        {% for freelancer in results %}
+                            <div class="col-md-6 border-bottom border-end p-3">                                <div class="d-flex">
+                                    <img src="{{ url_for('serve_profile_image', image_id=freelancer.user.profile_pic()) }}" 
+                                         class="rounded-circle me-3" width="60" height="60">
+                                    <div class="flex-grow-1"><div class="d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-0">{{ freelancer.user.username() }}</h5>
+                                            <div class="d-flex gap-2">
+                                                {% if hasattr(freelancer, 'similarity_score') and freelancer.similarity_score %}
+                                                    <span class="badge bg-info">{{ freelancer.similarity_score }}% match</span>
+                                                {% endif %}
+                                                <span class="badge bg-success">{{ freelancer.hourly_rate }} ₹/hr</span>
+                                            </div>
+                                        </div>
+                                        <p class="text-muted mb-2">{{ freelancer.domain }}</p>
+                                        <div class="mb-2">
+                                            {% for i in range(5) %}
+                                                {% if i < freelancer.rating | int %}
+                                                    <i class="fas fa-star text-warning"></i>
+                                                {% elif (i + 0.5) < freelancer.rating %}
+                                                    <i class="fas fa-star-half-alt text-warning"></i>
+                                                {% else %}
+                                                    <i class="far fa-star text-warning"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                            <span class="ms-1">({{ freelancer.rating }})</span>
+                                        </div>
+                                        <p class="small text-muted mb-3">{{ freelancer.bio|truncate(100) if freelancer.bio else "No bio available" }}</p>
+                                        <div class="d-flex flex-wrap gap-1 mb-3">
+                                            {% for skill in freelancer.skills.split(',')[:3] if freelancer.skills %}
+                                                <span class="badge bg-light text-dark">{{ skill.strip() }}</span>
+                                            {% endfor %}
+                                            {% if freelancer.skills and freelancer.skills.split(',')|length > 3 %}
+                                                <span class="badge bg-light text-dark">+{{ freelancer.skills.split(',')|length - 3 }} more</span>
+                                            {% endif %}
+                                        </div>
+                                        <a href="{{ url_for('view_freelancer', freelancer_id=freelancer.id) }}" class="btn btn-sm btn-outline-primary">
+                                            View Profile
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="list-group list-group-flush">
+                        {% for post in results %}
+                            <div class="list-group-item">                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h5 class="mb-0">
+                                        <a href="{{ url_for('view_post', post_id=post.id) }}" class="text-decoration-none">
+                                            {{ post.title }}
+                                        </a>
+                                    </h5>
+                                    <div class="d-flex gap-2">
+                                        {% if hasattr(post, 'similarity_score') and post.similarity_score %}
+                                            <span class="badge bg-info">{{ post.similarity_score }}% match</span>
+                                        {% endif %}
+                                        <span class="badge bg-success">₹ {{ post.budget }}</span>
+                                    </div>
+                                </div>
+                                <p class="text-muted small mb-2">
+                                    <span class="badge bg-secondary">{{ post.recommended_domain }}</span>
+                                    <span class="ms-2"><i class="far fa-clock"></i> {{ post.duration }}</span>
+                                    <span class="ms-2"><i class="far fa-calendar-alt"></i> {{ post.created_at.strftime('%d %b %Y') }}</span>
+                                </p>
+                                <p class="card-text mb-3">{{ post.description|truncate(200) }}</p>
+                                <div class="d-flex flex-wrap gap-1 mb-3">
+                                    {% for skill in post.skills.split(',')[:5] %}
+                                        <span class="badge bg-light text-dark">{{ skill.strip() }}</span>
+                                    {% endfor %}
+                                    {% if post.skills.split(',')|length > 5 %}
+                                        <span class="badge bg-light text-dark">+{{ post.skills.split(',')|length - 5 }} more</span>
+                                    {% endif %}
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        Posted by {{ post.client.company_name or post.client.user.username() }}
+                                    </small>
+                                    <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn btn-sm btn-primary">
+                                        View Details
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="card-body text-center py-5">
+                <img src="{{ url_for('static', filename='img/empty-search.svg') }}" alt="No results found" class="mb-3" width="80">
+                <h5>No Results Found</h5>
+                <p class="text-muted">We couldn't find any {{ search_type }} matching "{{ query }}"</p>
+                <p>Try using different keywords or filters</p>
+            </div>
+        {% endif %}
+    </div>
+{% else %}
+    <div class="card shadow-sm">
+        <div class="card-body text-center py-5">
+            <img src="{{ url_for('static', filename='img/search.svg') }}" alt="Search" class="mb-3" width="120">
+            <h5>Search for Freelancers or Projects</h5>
+            <p class="text-muted">Enter keywords in the search box above to find what you're looking for</p>
+            
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h6>Looking for Freelancers?</h6>
+                            <p class="small text-muted">Search by skills, domain, or username</p>
+                            <form action="{{ url_for('search') }}" method="GET">
+                                <input type="hidden" name="type" value="freelancers">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" name="q" placeholder="Search freelancers...">
+                                    <button class="btn btn-primary" type="submit">Search</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h6>Looking for Projects?</h6>
+                            <p class="small text-muted">Search by title, skills, or keywords</p>
+                            <form action="{{ url_for('search') }}" method="GET">
+                                <input type="hidden" name="type" value="projects">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" name="q" placeholder="Search projects...">
+                                    <button class="btn btn-primary" type="submit">Search</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

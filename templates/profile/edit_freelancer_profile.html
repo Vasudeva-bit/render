@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile - FreelanceMatch{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .select2-container--default .select2-selection--multiple {
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        min-height: 38px;
+    }
+    .select2-container--default.select2-container--focus .select2-selection--multiple {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>Edit Your Profile</h1>
+        <p class="text-muted">Update your freelancer profile information</p>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <a href="{{ url_for('view_profile') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Profile
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Profile Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="" enctype="multipart/form-data">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.domain.label(class="form-label") }}
+                        {% if form.domain.errors %}
+                            {{ form.domain(class="form-select is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.domain.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.domain(class="form-select") }}
+                        {% endif %}
+                        <div class="form-text">Select your primary area of expertise</div>
+                    </div>
+                    <!-- Replace the skills input section with this code -->
+<div class="mb-3">
+    {{ form.skills.label(class="form-label") }}
+    {% if form.skills.errors %}
+        {{ form.skills(class="form-select select2-skills is-invalid", multiple="multiple") }}
+        <div class="invalid-feedback">
+            {% for error in form.skills.errors %}
+                {{ error }}
+            {% endfor %}
+        </div>
+    {% else %}
+        {{ form.skills(class="form-select select2-skills", multiple="multiple") }}
+    {% endif %}
+    <div class="form-text">Select all skills that apply to you</div>
+</div>
+                    <div class="mb-3">
+                        {{ form.bio.label(class="form-label") }}
+                        {% if form.bio.errors %}
+                            {{ form.bio(class="form-control is-invalid", rows=6) }}
+                            <div class="invalid-feedback">
+                                {% for error in form.bio.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.bio(class="form-control", rows=6) }}
+                        {% endif %}
+                        <div class="form-text">Write a professional bio highlighting your experience and expertise</div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ form.experience.label(class="form-label") }}
+                            {% if form.experience.errors %}
+                                {{ form.experience(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.experience.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.experience(class="form-control") }}
+                            {% endif %}
+                            <div class="form-text">e.g. "5 years" or "2+ years"</div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form.hourly_rate.label(class="form-label") }}
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-rupee-sign"></i></span>
+                                {% if form.hourly_rate.errors %}
+                                    {{ form.hourly_rate(class="form-control is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.hourly_rate.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.hourly_rate(class="form-control") }}
+                                {% endif %}
+                            </div>
+                            <div class="form-text">Your hourly rate in INR</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.location.label(class="form-label") }}
+                        {% if form.location.errors %}
+                            {{ form.location(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.location.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.location(class="form-control") }}
+                        {% endif %}
+                        <div class="form-text">Your city or country (e.g. "Mumbai, India")</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.linkedin.label(class="form-label") }}
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fab fa-linkedin"></i></span>
+                            {% if form.linkedin.errors %}
+                                {{ form.linkedin(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.linkedin.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.linkedin(class="form-control") }}
+                            {% endif %}
+                        </div>
+                        <div class="form-text">Your LinkedIn profile URL</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.portfolio_url.label(class="form-label") }}
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-globe"></i></span>
+                            {% if form.portfolio_url.errors %}
+                                {{ form.portfolio_url(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.portfolio_url.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.portfolio_url(class="form-control") }}
+                            {% endif %}
+                        </div>
+                        <div class="form-text">Your portfolio or personal website URL</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        {{ form.profile_pic.label(class="form-label") }}
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-image"></i></span>
+                            {{ form.profile_pic(class="form-control") }}
+                        </div>
+                        {% if form.profile_pic.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.profile_pic.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Upload a profile picture (JPG, PNG only)</div>                        <div class="mt-2">
+                            <img src="{{ url_for('serve_profile_image', image_id=current_user.profile_pic()) }}" 
+                                 class="rounded border" width="100" height="100" alt="Current profile picture">
+                            <small class="d-block text-muted mt-1">Current profile picture</small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        {{ form.submit(class="btn btn-primary btn-lg") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Profile Completion Tips</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-3">
+                        <div class="d-flex">
+                            <div class="me-2 text-primary">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Be Detailed</h6>
+                                <p class="small text-muted">Provide comprehensive information about your skills and experience.</p>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="mb-3">
+                        <div class="d-flex">
+                            <div class="me-2 text-primary">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Professional Bio</h6>
+                                <p class="small text-muted">Write a concise but informative bio that highlights your experience and expertise.</p>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="mb-3">
+                        <div class="d-flex">
+                            <div class="me-2 text-primary">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Add Your Portfolio</h6>
+                                <p class="small text-muted">Link to your portfolio to showcase your past work and demonstrate your skills.</p>
+                            </div>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="d-flex">
+                            <div class="me-2 text-primary">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Professional Photo</h6>
+                                <p class="small text-muted">Upload a professional profile picture to build trust with potential clients.</p>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize select2 for skills input
+        $('#skills-input').select2({
+            tags: true,
+            tokenSeparators: [','],
+            placeholder: "Enter your skills..."
+        });
+        
+        // Convert existing skills to select2 format
+        let skillsString = $('#skills-input').val();
+        if (skillsString) {
+            let skillsArray = skillsString.split(',').map(skill => skill.trim());
+            $('#skills-input').val(null);
+            
+            skillsArray.forEach(function(skill) {
+                if (skill) {
+                    let option = new Option(skill, skill, true, true);
+                    $('#skills-input').append(option);
+                }
+            });
+            
+            $('#skills-input').trigger('change');
+        }
+        
+        // Convert select2 tags back to comma-separated string on form submit
+        $('form').on('submit', function() {
+            let selectedSkills = $('#skills-input').select2('data');
+            let skillsString = selectedSkills.map(item => item.text).join(', ');
+            $('#skills-input').val(skillsString);
+        });
+    });
+// Replace the script section with this updated JavaScript
+
+    $(document).ready(function() {
+        // Initialize select2 for the skills dropdown
+        $('.select2-skills').select2({
+            placeholder: "Select your skills...",
+            allowClear: true,
+            width: '100%'
+        });
+    });
+
+</script>
+{% endblock %}

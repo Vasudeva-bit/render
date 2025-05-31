@@ -1,0 +1,394 @@
+{% extends "base.html" %}
+
+{% block title %}{{ post.title }} - FreelanceMatch{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-8">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                {% if current_user.role() == 'freelancer' %}
+                    <li class="breadcrumb-item"><a href="{{ url_for('browse_posts') }}">Projects</a></li>
+                {% elif current_user.role() == 'client' %}
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                {% endif %}
+                <li class="breadcrumb-item active">{{ post.title[:50] }}{% if post.title|length > 50 %}...{% endif %}</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <span class="badge bg-{{ 'success' if post.status == 'open' else 'info' if post.status == 'assigned' else 'primary' if post.status == 'completed' else 'secondary' }} p-2">
+            <i class="fas fa-circle me-1 small"></i>
+            {{ post.status.capitalize() }}
+        </span>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Project Details -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h1 class="mb-3">{{ post.title }}</h1>
+                
+                <div class="d-flex flex-wrap gap-3 mb-4">
+                    <div>
+                        <span class="text-muted">Budget:</span>
+                        <span class="fw-bold"><i class="fas fa-rupee-sign"></i> {{ post.budget }}</span>
+                    </div>
+                    <div>
+                        <span class="text-muted">Duration:</span>
+                        <span class="fw-bold">{{ post.duration }}</span>
+                    </div>
+                    <div>
+                        <span class="text-muted">Posted:</span>
+                        <span class="fw-bold">{{ post.created_at.strftime('%d %b %Y') }}</span>
+                    </div>
+                    <div>
+                        <span class="text-muted">Domain:</span>
+                        <span class="fw-bold">{{ post.recommended_domain }}</span>
+                    </div>
+                </div>
+                
+                <h5 class="card-title mb-3">Project Description</h5>
+                <div class="mb-4">
+                    {{ post.description|nl2br }}
+                </div>
+                
+                <h5 class="card-title mb-3">Required Skills</h5>
+                <div class="mb-4">
+                    {% for skill in post.skills.split(',') %}
+                        <span class="badge bg-light text-dark mb-1 me-1 p-2">{{ skill.strip() }}</span>
+                    {% endfor %}
+                </div>
+                
+                {% if post.keywords %}
+                    <h5 class="card-title mb-3">Keywords</h5>
+                    <div class="mb-4">
+                        {% for keyword in post.keywords.split(',') %}
+                            <span class="badge bg-primary bg-opacity-10 text-primary mb-1 me-1 p-2">{{ keyword.strip() }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <div>
+                        {% if current_user.is_authenticated and current_user.role() == 'freelancer' and post.status == 'open' %}
+                            {% if not user_has_bid %}
+                                <a href="{{ url_for('create_bid', post_id=post.id) }}" class="btn btn-primary">
+                                    <i class="fas fa-hand-paper me-1"></i> Place a Bid
+                                </a>
+                            {% else %}
+                                <span class="text-success">
+                                    <i class="fas fa-check-circle me-1"></i> You've already bid on this project
+                                </span>
+                            {% endif %}
+                        {% elif current_user.is_authenticated and current_user.role() == 'client' and is_owner %}
+                            {% if post.status == 'assigned' %}
+                                <a href="{{ url_for('complete_project', post_id=post.id) }}" class="btn btn-success me-2">
+                                    <i class="fas fa-check-circle me-1"></i> Mark as Completed
+                                </a>
+                                <a href="{{ url_for('chat', post_id=post.id) }}" class="btn btn-primary me-2">
+                                    <i class="fas fa-comments me-1"></i> Chat with Freelancer
+                                </a>
+                            {% elif post.status == 'open' %}
+                                <a href="{{ url_for('recommended_freelancers', post_id=post.id) }}" class="btn btn-info me-2">
+                                    <i class="fas fa-user-friends me-1"></i> View Recommended Freelancers
+                                </a>
+                            {% endif %}
+                        {% elif current_user.is_authenticated and current_user.role() == 'freelancer' and post.status == 'assigned' %}
+                            {% for bid in bids %}
+                                {% if bid.freelancer_id == current_user.freelancer_profile().id and bid.status == 'accepted' %}
+                                    <a href="{{ url_for('chat', post_id=post.id) }}" class="btn btn-primary">
+                                        <i class="fas fa-comments me-1"></i> Chat with Client
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <button type="button" class="btn btn-outline-secondary" onclick="window.history.back()">
+                            <i class="fas fa-arrow-left me-1"></i> Back
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bids Section -->
+        {% if is_owner and bids %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Bids ({{ bids|length }})</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Freelancer</th>
+                                    <th>Bid Amount</th>
+                                    <th>Delivery Time</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for bid in bids %}
+                                    <tr>
+                                        <td>                                            <div class="d-flex align-items-center">                                                {% if bid.freelancer and bid.freelancer.user %}
+                                                    <img src="{{ url_for('serve_profile_image', image_id=bid.freelancer.user.profile_pic()) }}"
+                                                         class="rounded-circle me-2" width="32" height="32">
+                                                {% else %}
+                                                    <img src="{{ url_for('serve_profile_image', image_id='default-butterfly-profile') }}"
+                                                         class="rounded-circle me-2" width="32" height="32">
+                                                {% endif %}
+                                                <div>
+                                                    {% if bid.freelancer and bid.freelancer.id %}
+                                                    <a href="{{ url_for('view_freelancer', freelancer_id=bid.freelancer.id) }}"
+                                                       class="text-decoration-none fw-medium">
+                                                        {% if bid.freelancer.user %}
+                                                            {{ bid.freelancer.user.username() }}
+                                                        {% else %}
+                                                            Unknown Freelancer
+                                                        {% endif %}
+                                                    </a>
+                                                    {% else %}
+                                                        <span class="fw-medium">Unknown Freelancer</span>
+                                                    {% endif %}
+                                                    {% if bid.freelancer and bid.freelancer.domain %}
+                                                    <div class="small text-muted">{{ bid.freelancer.domain }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><i class="fas fa-rupee-sign"></i> {{ bid.amount }}</td>
+                                        <td>{{ bid.delivery_time }}</td>
+                                        <td>
+                                            {% if bid.status == 'pending' %}
+                                                <span class="badge bg-warning text-dark">Pending</span>
+                                            {% elif bid.status == 'accepted' %}
+                                                <span class="badge bg-success">Accepted</span>
+                                            {% elif bid.status == 'rejected' %}
+                                                <span class="badge bg-danger">Rejected</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ bid.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end">
+                                            {% if bid.status == 'pending' and post.status == 'open' %}
+                                                <a href="{{ url_for('update_bid_status', bid_id=bid.id, status='accepted') }}"
+                                                   class="btn btn-sm btn-success me-1" onclick="return confirm('Are you sure you want to accept this bid? All other bids will be rejected.')">
+                                                    Accept
+                                                </a>
+                                                <a href="{{ url_for('update_bid_status', bid_id=bid.id, status='rejected') }}"
+                                                   class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to reject this bid?')">
+                                                    Reject
+                                                </a>
+                                            {% elif bid.status == 'accepted' %}
+                                                <a href="{{ url_for('chat', post_id=post.id) }}"
+                                                   class="btn btn-sm btn-outline-primary me-1">
+                                                    <i class="fas fa-comments"></i> Chat
+                                                </a>
+                                                {% if bid.freelancer and bid.freelancer.id %}
+                                                <a href="{{ url_for('view_freelancer', freelancer_id=bid.freelancer.id) }}"
+                                                   class="btn btn-sm btn-outline-secondary">
+                                                    <i class="fas fa-user"></i> Profile
+                                                </a>
+                                                {% endif %}
+                                            {% else %}
+                                                {% if bid.freelancer and bid.freelancer.id %}
+                                                <a href="{{ url_for('view_freelancer', freelancer_id=bid.freelancer.id) }}"
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-user me-1"></i> View Profile
+                                                </a>
+                                                {% endif %}
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Freelancer's Bid Information (if logged in and has bid) -->
+        {% if current_user.is_authenticated and current_user.role() == 'freelancer' and user_has_bid %}
+            {% set user_bid = bids|selectattr('freelancer_id', 'equalto', current_user.freelancer_profile().id)|first %}
+            <div class="card shadow-sm mb-4 border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Your Bid</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <p class="text-muted mb-1">Bid Amount</p>
+                            <p class="fw-bold mb-3"><i class="fas fa-rupee-sign"></i> {{ user_bid.amount }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p class="text-muted mb-1">Delivery Time</p>
+                            <p class="fw-bold mb-3">{{ user_bid.delivery_time }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p class="text-muted mb-1">Status</p>
+                            <p class="fw-bold mb-3">
+                                {% if user_bid.status == 'pending' %}
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                {% elif user_bid.status == 'accepted' %}
+                                    <span class="badge bg-success">Accepted</span>
+                                {% elif user_bid.status == 'rejected' %}
+                                    <span class="badge bg-danger">Rejected</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ user_bid.status }}</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <h6>Your Proposal</h6>
+                    <p>{{ user_bid.proposal }}</p>
+
+                    {% if user_bid.status == 'accepted' %}
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('chat', post_id=post.id) }}" class="btn btn-primary">
+                                <i class="fas fa-comments me-1"></i> Chat with Client
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Client Information -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">About the Client</h5>
+            </div>
+            <div class="card-body">                {% if post.client %}
+                    <div class="d-flex align-items-center mb-3">                        {% if post.client.user %}
+                            <img src="{{ url_for('serve_profile_image', image_id=post.client.user.profile_pic()) }}"
+                                 alt="Client profile picture" class="rounded-circle me-3" width="50" height="50">
+                        {% else %}
+                            <img src="{{ url_for('serve_profile_image', image_id='default-butterfly-profile') }}"
+                                 alt="Client profile picture" class="rounded-circle me-3" width="50" height="50">
+                        {% endif %}
+
+                        <div>
+                            <h6 class="mb-0">
+                                {% if post.client.company_name %}
+                                    {{ post.client.company_name }}
+                                {% elif post.client.user %}
+                                    {{ post.client.user.username() }} {# Call the method #}
+                                {% else %}
+                                    Client
+                                {% endif %}
+                            </h6>
+                            {% if post.client.location %}
+                            <small class="text-muted"><i class="fas fa-map-marker-alt"></i> {{ post.client.location }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if post.client.description %}
+                    <p>{{ post.client.description }}</p>
+                    {% endif %}
+                    {% if post.client.website %}
+                    <p><a href="{{ post.client.website }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-link"></i> Visit Website</a></p>
+                    {% endif %}
+                {% else %}
+                    <p class="text-muted">Client information not available.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Recommended Freelancers (for project owner) -->
+        {% if is_owner and recommended_freelancers %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Recommended Freelancers</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for freelancer in recommended_freelancers %}
+                            <div class="list-group-item">                                <div class="d-flex align-items-center">                                    {% if freelancer.user %}
+                                    <img src="{{ url_for('serve_profile_image', image_id=freelancer.user.profile_pic()) }}" 
+                                         class="rounded-circle me-3" width="48" height="48">
+                                    {% else %}
+                                    <img src="{{ url_for('serve_profile_image', image_id='default-butterfly-profile') }}" 
+                                         class="rounded-circle me-3" width="48" height="48">
+                                    {% endif %}
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0">
+                                                {% if freelancer.user %}
+                                                    {{ freelancer.user.username() }}
+                                                {% else %}
+                                                    Unknown Freelancer
+                                                {% endif %}
+                                            </h6>
+                                            <span class="badge bg-success">{{ freelancer.hourly_rate }} ₹/hr</span>
+                                        </div>
+                                        <p class="text-muted mb-0 small">{{ freelancer.domain }}</p>
+                                        <div class="mt-1">
+                                            {% for i in range(5) %}
+                                                {% if i < freelancer.rating | int %}
+                                                    <i class="fas fa-star text-warning small"></i>
+                                                {% elif (i + 0.5) < freelancer.rating %}
+                                                    <i class="fas fa-star-half-alt text-warning small"></i>
+                                                {% else %}
+                                                    <i class="far fa-star text-warning small"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                            <span class="ms-1 small">({{ freelancer.rating }})</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <p class="small text-muted mb-2">Skills: {{ freelancer.skills|truncate(60) }}</p>
+                                    <a href="{{ url_for('view_freelancer', freelancer_id=freelancer.id) }}" class="btn btn-sm btn-outline-primary">
+                                        View Profile
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        
+        <!-- Similar Projects -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Related Projects</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">Similar projects in {{ post.recommended_domain }}:</p>
+                <div class="list-group list-group-flush">
+                    {% set related_posts = posts|default([]) %}
+                    {% if related_posts %}
+                        {% for related_post in related_posts if related_post.id != post.id %}
+                            <a href="{{ url_for('view_post', post_id=related_post.id) }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-1">{{ related_post.title }}</h6>
+                                    <span class="badge bg-secondary">₹ {{ related_post.budget }}</span>
+                                </div>
+                                <p class="mb-1 small text-muted">{{ related_post.description|truncate(80) }}</p>
+                                <small>Posted {{ related_post.created_at.strftime('%d %b %Y') }}</small>
+                            </a>
+                        {% else %}
+                            <p class="text-center text-muted my-3">No related projects found</p>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-center text-muted my-3">No related projects found</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

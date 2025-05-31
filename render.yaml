@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: gigfusion-frontend
+    env: python
+    repo: https://github.com/YOUR_USERNAME/gigfusion
+    buildCommand: pip install -r requirements_render.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT render_app:app
+    plan: free
+    branch: main
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: EC2_API_URL
+        value: http://ec2-54-221-34-34.compute-1.amazonaws.com:5000
+      - key: FLASK_ENV
+        value: production
+      - key: PYTHON_VERSION
+        value: 3.9.7
+    healthCheckPath: /health

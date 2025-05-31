@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}Friend Suggestions{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">People You May Know</h1>
+    <p class="text-muted mb-4">Based on your profile, skills, and interests</p>
+
+    <div class="mb-4">
+        <a href="{{ url_for('view_profile') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Profile
+        </a>
+    </div>
+
+    {% if suggestions %}
+        <div class="row">
+            {% for user in suggestions %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <div class="d-flex justify-content-between align-items-center">                                <h5 class="mb-0">
+                                    {% if user.profile_pic() %}
+                                        <img src="{{ url_for('serve_profile_image', image_id=user.profile_pic()) }}" alt="Profile" class="rounded-circle mr-2" style="width: 30px; height: 30px; object-fit: cover;">
+                                    {% endif %}
+                                    {{ user.username() }}
+                                </h5>
+                                <span class="badge bg-light text-dark">
+                                    {% if user.profile_type == "freelancer" %}
+                                        Freelancer
+                                    {% elif user.profile_type == "client" %}
+                                        Client
+                                    {% else %}
+                                        User
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% if user.profile_type == "freelancer" %}
+                                <div class="mb-3">
+                                    <strong>Domain:</strong> {{ user.profile.domain }}
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Rating:</strong> 
+                                    <div class="d-inline-block">
+                                        {% for i in range(5) %}
+                                            {% if i < user.profile.rating|int %}
+                                                <i class="fas fa-star text-warning"></i>
+                                            {% elif i < (user.profile.rating + 0.5)|int %}
+                                                <i class="fas fa-star-half-alt text-warning"></i>
+                                            {% else %}
+                                                <i class="far fa-star text-warning"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                        <span class="ms-1">({{ user.profile.rating }})</span>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Skills:</strong> {{ user.profile.skills }}
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Experience:</strong> {{ user.profile.experience }}
+                                </div>
+                            {% elif user.profile_type == "client" %}
+                                <div class="mb-3">
+                                    <strong>Company:</strong> {{ user.profile.company_name }}
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Industry:</strong> {{ user.profile.industry }}
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Location:</strong> {{ user.profile.location }}
+                                </div>
+                            {% endif %}
+                            <div class="mb-3">
+                                <strong>Similarity Score:</strong> <span class="badge bg-success">{{ user.similarity_score }}%</span>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white">
+                            {% if user.profile_type == "freelancer" %}
+                                <a href="{{ url_for('view_freelancer', freelancer_id=user.profile.id) }}" class="btn btn-outline-primary w-100">
+                                    View Profile
+                                </a>
+                            {% else %}
+                                <button class="btn btn-outline-primary w-100" disabled>
+                                    View Profile
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            No suggestions available at this time. Try updating your profile with more skills and information.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

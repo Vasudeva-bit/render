@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block title %}Post a Project - FreelanceMatch{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .select2-container--default .select2-selection--multiple {
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        min-height: 38px;
+    }
+    .select2-container--default.select2-container--focus .select2-selection--multiple {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>Post a New Project</h1>
+        <p class="text-muted">Find the perfect freelancer for your project</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Project Details</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.title.label(class="form-label") }}
+                        {% if form.title.errors %}
+                            {{ form.title(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.title.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.title(class="form-control") }}
+                        {% endif %}
+                        <div class="form-text">A clear title helps attract the right freelancers</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {% if form.description.errors %}
+                            {{ form.description(class="form-control is-invalid", rows=8) }}
+                            <div class="invalid-feedback">
+                                {% for error in form.description.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.description(class="form-control", rows=8) }}
+                        {% endif %}
+                        <div class="form-text">Provide detailed information about your project requirements</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.skills.label(class="form-label") }}
+                        {% if form.skills.errors %}
+                            {{ form.skills(class="form-control is-invalid", id="skills-input") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.skills.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.skills(class="form-control", id="skills-input") }}
+                        {% endif %}
+                        <div class="form-text">Enter skills required for the project, separated by commas</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.keywords.label(class="form-label") }}
+                        {% if form.keywords.errors %}
+                            {{ form.keywords(class="form-control is-invalid", id="keywords-input") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.keywords.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.keywords(class="form-control", id="keywords-input") }}
+                        {% endif %}
+                        <div class="form-text">Enter keywords to help freelancers find your project, separated by commas</div>
+                        <div id="keyword-suggestions" class="mt-2"></div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ form.budget.label(class="form-label") }}
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-rupee-sign"></i></span>
+                                {% if form.budget.errors %}
+                                    {{ form.budget(class="form-control is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.budget.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.budget(class="form-control") }}
+                                {% endif %}
+                            </div>
+                            <div class="form-text">Your total budget for the project in INR</div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form.duration.label(class="form-label") }}
+                            {% if form.duration.errors %}
+                                {{ form.duration(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.duration.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.duration(class="form-control") }}
+                            {% endif %}
+                            <div class="form-text">Expected completion time (e.g. "2 weeks", "1 month")</div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        {{ form.submit(class="btn btn-primary btn-lg") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Tips for Great Projects</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-3">
+                        <div class="d-flex">
+                            <div class="me-2 text-primary">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Be Specific</h6>
+                                <p class="small text-muted">Clearly outline your requirements, deliverables, and expectations.</p>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="mb-3">
+                        <div class="d-flex">
+                            <div class="me-2 text-primary">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Set Realistic Budget</h6>
+                                <p class="small text-muted">Research market rates for similar projects to attract the right talent.</p>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="mb-3">
+                        <div class="d-flex">
+                            <div class="me-2 text-primary">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Add Keywords</h6>
+                                <p class="small text-muted">Include relevant keywords to help freelancers find your project.</p>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Our Recommendation Engine</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Our AI-powered system will automatically:</p>
+                <ul class="mb-0">
+                    <li>Analyze your project description</li>
+                    <li>Identify the most suitable domain</li>
+                    <li>Recommend skilled freelancers</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize select2 for skills input with predefined options
+        $('#skills-input').select2({
+            tags: true,
+            tokenSeparators: [','],
+            placeholder: "Select or enter required skills...",
+            allowClear: true,
+            theme: "classic",
+            width: '100%'
+        });
+
+        // Initialize select2 for keywords input with predefined options
+        $('#keywords-input').select2({
+            tags: true,
+            tokenSeparators: [','],
+            placeholder: "Select or enter keywords...",
+            allowClear: true,
+            theme: "classic",
+            width: '100%'
+        });
+
+        // Keyword suggestion based on skills
+        $('#skills-input').on('change', function() {
+            let skills = $(this).val();
+            if (skills && skills.length > 0) {
+                // Convert array to comma-separated string
+                skills = skills.join(',');
+
+                // Make AJAX request to get keyword suggestions
+                $.get('/api/keyword_suggestions', {skills: skills}, function(data) {
+                    let suggestionsHtml = '';
+                    if (data && data.length > 0) {
+                        suggestionsHtml = '<div class="mb-2">Suggested keywords:</div><div>';
+                        data.forEach(function(keyword) {
+                            suggestionsHtml += `
+                                <span class="badge bg-light text-dark me-1 mb-1" style="cursor: pointer;"
+                                    onclick="addKeyword('${keyword}')">
+                                    ${keyword} <i class="fas fa-plus text-muted"></i>
+                                </span>`;
+                        });
+                        suggestionsHtml += '</div>';
+                    }
+                    $('#keyword-suggestions').html(suggestionsHtml);
+                });
+            }
+        });
+
+        // Add custom styling for the Select2 dropdowns
+        $(".select2-container--default .select2-selection--multiple").css({
+            "border": "1px solid #ced4da",
+            "border-radius": "0.25rem",
+            "min-height": "38px"
+        });
+
+        $(".select2-container--default.select2-container--focus .select2-selection--multiple").css({
+            "border-color": "#86b7fe",
+            "box-shadow": "0 0 0 0.25rem rgba(13, 110, 253, 0.25)"
+        });
+    });
+
+    // Function to add a keyword to the keywords input
+    function addKeyword(keyword) {
+        // Check if keyword already exists
+        let currentKeywords = $('#keywords-input').val() || [];
+        if (!currentKeywords.includes(keyword)) {
+            // Create a new option and append it to keywords select
+            let newOption = new Option(keyword, keyword, true, true);
+            $('#keywords-input').append(newOption).trigger('change');
+        }
+    }
+</script>
+{% endblock %}

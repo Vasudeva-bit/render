@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Recommended Freelancers - {{ post.title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">Recommended Freelancers</h1>
+    <h4 class="text-muted mb-4">For your project: "{{ post.title }}"</h4>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Project Details</h5>
+        </div>
+        <div class="card-body">
+            <h6>Domain: {{ post.recommended_domain }}</h6>
+            <h6>Budget: ${{ post.budget }}</h6>
+            <h6>Required Skills: {{ post.skills }}</h6>
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Project
+        </a>
+    </div>
+
+    {% if recommended_freelancers %}
+        <div class="row">
+            {% for freelancer in recommended_freelancers %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm">                        <div class="card-header bg-primary text-white">
+                            <div class="d-flex justify-content-between align-items-center">                                <h5 class="mb-0">
+                                    {% if freelancer.user.profile_pic() %}
+                                        <img src="{{ url_for('serve_profile_image', image_id=freelancer.user.profile_pic()) }}" alt="Profile" class="rounded-circle mr-2" style="width: 30px; height: 30px; object-fit: cover;">
+                                    {% endif %}
+                                    {{ freelancer.user.username() }}
+                                </h5>
+                                <div class="d-flex gap-2">
+                                    {% if hasattr(freelancer, 'similarity_score') and freelancer.similarity_score %}
+                                        <span class="badge bg-info">{{ freelancer.similarity_score }}% match</span>
+                                    {% endif %}
+                                    <span class="badge bg-light text-dark">{{ freelancer.domain }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <strong>Rating:</strong> 
+                                <div class="d-inline-block">
+                                    {% for i in range(5) %}
+                                        {% if i < freelancer.rating|int %}
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% elif i < (freelancer.rating + 0.5)|int %}
+                                            <i class="fas fa-star-half-alt text-warning"></i>
+                                        {% else %}
+                                            <i class="far fa-star text-warning"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <span class="ms-1">({{ freelancer.rating }})</span>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <strong>Hourly Rate:</strong> ${{ freelancer.hourly_rate }}
+                            </div>
+                            <div class="mb-3">
+                                <strong>Skills:</strong> {{ freelancer.skills }}
+                            </div>
+                            <div class="mb-3">
+                                <strong>Experience:</strong> {{ freelancer.experience }}
+                            </div>
+                            <div>
+                                <small class="text-muted">{{ freelancer.bio|truncate(150) }}</small>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white">
+                            <a href="{{ url_for('view_freelancer', freelancer_id=freelancer.id) }}" class="btn btn-outline-primary w-100">
+                                View Profile
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            No recommended freelancers found for this project. Try updating your project details to match more freelancers.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

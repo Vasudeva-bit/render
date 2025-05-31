@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Browse Projects - FreelanceMatch{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <h1>Find Projects</h1>
+        <p class="text-muted">Browse available projects that match your skills</p>
+    </div>
+    <div class="col-md-4">
+        <div class="d-flex">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="Search projects..." id="search-input">
+                <button class="btn btn-primary" type="button" id="search-button">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Filters -->
+    <div class="col-lg-3">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Filters</h5>
+            </div>
+            <div class="card-body">
+                <form id="filter-form" method="GET" action="{{ url_for('browse_posts') }}">
+                    <div class="mb-3">
+                        <label class="form-label">Domain</label>
+                        <select class="form-select" name="domain">
+                            <option value="">All Domains</option>
+                            {% for domain in domains %}
+                                <option value="{{ domain }}" {% if current_filters.domain == domain %}selected{% endif %}>{{ domain }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Keywords</label>
+                        <input type="text" class="form-control" name="keywords" value="{{ current_filters.keywords or '' }}" placeholder="Enter keywords...">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Budget Range (₹)</label>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <input type="number" class="form-control" name="min_budget" placeholder="Min" value="{{ current_filters.min_budget or '' }}">
+                            </div>
+                            <div class="col-6">
+                                <input type="number" class="form-control" name="max_budget" placeholder="Max" value="{{ current_filters.max_budget or '' }}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
+                        <a href="{{ url_for('browse_posts') }}" class="btn btn-outline-secondary">Clear Filters</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Your Domain</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-laptop-code fa-2x text-primary"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0">{{ current_user.freelancer_profile.domain }}</h6>
+                        <p class="small text-muted mb-0">Your specialization</p>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <p class="small mb-2">Projects in your domain:</p>
+                    <a href="{{ url_for('browse_posts', domain=current_user.freelancer_profile.domain) }}" class="btn btn-sm btn-outline-primary">
+                        Filter by Your Domain
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Project Listings -->
+    <div class="col-lg-9">
+        {% if posts %}
+            <div class="mb-3">
+                <p class="text-muted">Showing {{ posts|length }} projects</p>
+            </div>
+            
+            <div class="row g-4">
+                {% for post in posts %}
+                    <div class="col-md-6">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <h5 class="card-title">
+                                        <a href="{{ url_for('view_post', post_id=post.id) }}" class="text-decoration-none">
+                                            {{ post.title }}
+                                        </a>
+                                    </h5>
+                                    <span class="badge bg-success">₹ {{ post.budget }}</span>
+                                </div>
+                                <p class="text-muted small mb-2">
+                                    <span class="badge bg-secondary">{{ post.recommended_domain }}</span>
+                                    <span class="ms-2"><i class="far fa-clock"></i> {{ post.duration }}</span>
+                                    <span class="ms-2"><i class="far fa-calendar-alt"></i> {{ post.created_at.strftime('%d %b %Y') }}</span>
+                                    {% if post.similarity_score is defined and post.similarity_score %}
+                                        <span class="ms-2 badge bg-info">{{ post.similarity_score }}% match</span>
+                                    {% endif %}
+                                </p>
+                                <p class="card-text mb-3">{{ post.description[:150] }}{% if post.description|length > 150 %}...{% endif %}</p>
+                                <div class="d-flex flex-wrap gap-1 mb-3">
+                                    {% for skill in post.skills.split(',')[:5] %}
+                                        <span class="badge bg-light text-dark">{{ skill.strip() }}</span>
+                                    {% endfor %}
+                                    {% if post.skills.split(',')|length > 5 %}
+                                        <span class="badge bg-light text-dark">+{{ post.skills.split(',')|length - 5 }} more</span>
+                                    {% endif %}
+                                </div>                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        Client:
+                                        {% if post.client %}
+                                            {% if post.client.company_name %}
+                                                {{ post.client.company_name }}
+                                            {% elif post.client.user %}
+                                                {{ post.client.user.username() }}
+                                            {% else %}
+                                                Client (No Name)
+                                            {% endif %}
+                                        {% else %}
+                                            Unknown Client
+                                        {% endif %}
+                                    </small>
+                                    <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn btn-sm btn-primary">
+                                        View Details
+                                    </a>
+                                </div>
+                            </div>
+                            {% if post.recommended_domain == current_user.freelancer_profile.domain %}
+                                <div class="card-footer bg-primary bg-opacity-10 p-2">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-2 text-primary">
+                                            <i class="fas fa-star"></i>
+                                        </div>
+                                        <small class="fw-medium text-primary">Matches your domain</small>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="card shadow-sm">
+                <div class="card-body text-center p-5">
+                    <img src="{{ url_for('static', filename='img/empty-search.svg') }}" alt="No projects found" class="mb-3" width="120">
+                    <h5>No Projects Found</h5>
+                    <p class="text-muted">Try adjusting your filters or search terms.</p>
+                    <a href="{{ url_for('browse_posts') }}" class="btn btn-primary">
+                        <i class="fas fa-redo me-1"></i> Clear Filters
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Handle search functionality
+        $('#search-button').click(function() {
+            let searchTerm = $('#search-input').val().trim();
+            if (searchTerm) {
+                window.location.href = "{{ url_for('browse_posts') }}?keywords=" + encodeURIComponent(searchTerm);
+            }
+        });
+        
+        // Allow pressing Enter in search box
+        $('#search-input').on('keypress', function(e) {
+            if (e.which === 13) {
+                $('#search-button').click();
+            }
+        });
+        
+        // Set initial search value from URL if present
+        let urlParams = new URLSearchParams(window.location.search);
+        let keywordsParam = urlParams.get('keywords');
+        if (keywordsParam) {
+            $('#search-input').val(keywordsParam);
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+
+{% block title %}Freelancer Dashboard - FreelanceMatch{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <h1 class="mb-0">Welcome, {{ current_user.username() }}</h1>
+        <p class="text-muted">
+            {% if freelancer.domain %}
+                {{ freelancer.domain }} • {{ freelancer.experience }}
+            {% else %}
+                Complete your profile to get started
+            {% endif %}
+        </p>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <a href="{{ url_for('browse_posts') }}" class="btn btn-primary">
+            <i class="fas fa-search me-1"></i> Find Projects
+        </a>
+    </div>
+</div>
+
+<!-- Dashboard Stats -->
+<div class="row g-4 mb-5">
+    <div class="col-md-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                        <i class="fas fa-star text-primary"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-0">Rating</h6>
+                        <h3 class="mb-0">{{ freelancer.rating }}</h3>
+                    </div>
+                </div>
+                <div class="text-center">
+                    {% for i in range(5) %}
+                        {% if i < freelancer.rating | int %}
+                            <i class="fas fa-star text-warning"></i>
+                        {% elif (i + 0.5) < freelancer.rating %}
+                            <i class="fas fa-star-half-alt text-warning"></i>
+                        {% else %}
+                            <i class="far fa-star text-warning"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                        <i class="fas fa-briefcase text-success"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-0">Active Projects</h6>
+                        <h3 class="mb-0">{{ active_projects }}</h3>
+                    </div>
+                </div>
+                <a href="javascript:void(0);" class="btn btn-sm btn-outline-success w-100">Manage Projects</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
+                        <i class="fas fa-hand-paper text-info"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-0">Active Bids</h6>
+                        <h3 class="mb-0">{{ bids|selectattr('status', 'equalto', 'pending')|list|length }}</h3>
+                    </div>
+                </div>
+                <a href="javascript:void(0);" class="btn btn-sm btn-outline-info w-100">View All Bids</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                        <i class="fas fa-trophy text-warning"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-0">Success Rate</h6>
+                        <h3 class="mb-0">{{ "%.1f"|format(success_rate) }}%</h3>
+                    </div>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: {{ success_rate }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recommended Projects -->
+<div class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Recommended Projects</h2>
+        <a href="{{ url_for('browse_posts') }}" class="btn btn-sm btn-outline-primary">View All Projects</a>
+    </div>
+
+    {% if matching_posts %}
+        <div class="row g-4">
+            {% for post in matching_posts %}
+                <div class="col-md-6">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <h5 class="card-title">
+                                    <a href="{{ url_for('view_post', post_id=post.id) }}" class="text-decoration-none">
+                                        {{ post.title }}
+                                    </a>
+                                </h5>
+                                <span class="badge bg-success">₹ {{ post.budget }}</span>
+                            </div>
+                            <p class="text-muted small mb-2">
+                                <span class="badge bg-secondary">{{ post.recommended_domain }}</span>
+                                <span class="ms-2"><i class="far fa-clock"></i> {{ post.duration }}</span>
+                                <span class="ms-2"><i class="far fa-calendar-alt"></i> {{ post.created_at.strftime('%d %b %Y') }}</span>
+                            </p>
+                            <p class="card-text mb-3">{{ post.description[:150] }}{% if post.description|length > 150 %}...{% endif %}</p>
+                            <div class="d-flex flex-wrap gap-1 mb-3">
+                                {% for skill in post.skills.split(',')[:5] %}
+                                    <span class="badge bg-light text-dark">{{ skill.strip() }}</span>
+                                {% endfor %}
+                                {% if post.skills.split(',')|length > 5 %}
+                                    <span class="badge bg-light text-dark">+{{ post.skills.split(',')|length - 5 }} more</span>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    Client: 
+                                    {% if post.client %}
+                                        {{ post.client.company_name or post.client.user.username() }}
+                                    {% elif post.client_id %}
+                                        Client ID: {{ post.client_id }}
+                                    {% else %}
+                                        Unknown Client
+                                    {% endif %}
+                                </small>
+                                <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn btn-sm btn-primary">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card shadow-sm">
+            <div class="card-body text-center p-5">
+                <img src="{{ url_for('static', filename='img/empty-projects.svg') }}" alt="No projects" class="mb-3" width="120">
+                <h5>No Recommended Projects</h5>
+                <p class="text-muted">We don't have any projects matching your skills right now.</p>
+                <a href="{{ url_for('browse_posts') }}" class="btn btn-primary">
+                    <i class="fas fa-search me-1"></i> Browse All Projects
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Your Bids -->
+<div class="mb-5">
+    <h2 class="mb-4">Your Bids</h2>
+
+    {% if bids %}
+        <div class="card shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Project</th>
+                            <th>Client</th>
+                            <th>Bid Amount</th>
+                            <th>Delivery Time</th>
+                            <th>Status</th>
+                            <th>Bid Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bid in bids %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('view_post', post_id=bid.post.id) }}" class="text-decoration-none fw-medium">
+                                        {{ bid.post.title }}
+                                    </a>
+                                </td>
+                                <td>
+                                    {% if bid.post.client %}
+                                        {{ bid.post.client.company_name or bid.post.client.user.username() }}
+                                    {% elif bid.post.client_id %}
+                                        Client ID: {{ bid.post.client_id }}
+                                    {% else %}
+                                        Unknown Client
+                                    {% endif %}
+                                </td>
+                                <td><i class="fas fa-rupee-sign"></i> {{ bid.amount }}</td>
+                                <td>{{ bid.delivery_time }}</td>
+                                <td>
+                                    {% if bid.status == 'pending' %}
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    {% elif bid.status == 'accepted' %}
+                                        <span class="badge bg-success">Accepted</span>
+                                    {% elif bid.status == 'rejected' %}
+                                        <span class="badge bg-danger">Rejected</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ bid.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ bid.created_at.strftime('%d %b %Y') }}</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{{ url_for('view_post', post_id=bid.post.id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if bid.status == 'accepted' %}
+                                            <a href="{{ url_for('chat', post_id=bid.post.id) }}" class="btn btn-sm btn-outline-info" title="Chat with Client">
+                                                <i class="fas fa-comments"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="card shadow-sm">
+            <div class="card-body text-center p-5">
+                <img src="{{ url_for('static', filename='img/empty-bids.svg') }}" alt="No bids" class="mb-3" width="120">
+                <h5>No Bids Yet</h5>
+                <p class="text-muted">You haven't placed any bids on projects yet.</p>
+                <a href="{{ url_for('browse_posts') }}" class="btn btn-primary">
+                    <i class="fas fa-search me-1"></i> Find Projects to Bid On
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Profile Completion -->
+{% if not freelancer.bio or not freelancer.skills or not freelancer.experience %}
+    <div class="card shadow-sm mb-4 border-warning">
+        <div class="card-body">
+            <div class="d-flex align-items-center mb-3">
+                <div class="me-3">
+                    <i class="fas fa-exclamation-circle text-warning fa-2x"></i>
+                </div>
+                <div>
+                    <h5 class="card-title mb-0">Complete Your Profile</h5>
+                    <p class="text-muted mb-0">A complete profile helps you win more projects!</p>
+                </div>
+                <div class="ms-auto">
+                    <a href="{{ url_for('edit_profile') }}" class="btn btn-warning">
+                        Complete Now
+                    </a>
+                </div>
+            </div>
+            
+            <div class="progress mt-2">
+                {% set progress = 0 %}
+                {% if freelancer.bio %}{% set progress = progress + 25 %}{% endif %}
+                {% if freelancer.skills %}{% set progress = progress + 25 %}{% endif %}
+                {% if freelancer.experience %}{% set progress = progress + 25 %}{% endif %}
+                {% if freelancer.portfolio_url %}{% set progress = progress + 25 %}{% endif %}
+                
+                <div class="progress-bar bg-warning" role="progressbar" style="width: {{ progress }}%" 
+                     aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">{{ progress }}%</div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Tips and Resources -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Tips for Winning Projects</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="d-flex">
+                    <div class="me-3 text-primary">
+                        <i class="fas fa-file-alt fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6>Write Personalized Proposals</h6>
+                        <p class="small text-muted">Address client needs specifically and highlight relevant experience in your proposals.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex">
+                    <div class="me-3 text-primary">
+                        <i class="fas fa-palette fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6>Showcase Your Portfolio</h6>
+                        <p class="small text-muted">Keep your profile updated with your best work to impress potential clients.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex">
+                    <div class="me-3 text-primary">
+                        <i class="fas fa-comments fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6>Communicate Promptly</h6>
+                        <p class="small text-muted">Respond quickly to client inquiries to demonstrate your professionalism.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
