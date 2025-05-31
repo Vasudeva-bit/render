@@ -7,7 +7,9 @@ Connects to EC2 backend API and AWS RDS database
 import logging
 import os
 
-from flask import Flask, flash, jsonify, redirect, render_template, session, url_for
+from flask import (
+    Flask, flash, jsonify, redirect, render_template, session, url_for
+)
 from flask_cors import CORS
 from flask_login import LoginManager, current_user, login_required, logout_user
 
@@ -27,9 +29,9 @@ app = Flask(__name__)
 
 class ProductionConfig(Config):
     """Production configuration with environment variables"""
-
-    SECRET_KEY = (
-        os.environ.get("SECRET_KEY") or "fallback-secret-key-change-in-production"
+      SECRET_KEY = (
+        os.environ.get("SECRET_KEY")
+        or "fallback-secret-key-change-in-production"
     )
 
     # EC2 Backend API URL
@@ -59,8 +61,17 @@ api_client = EC2APIClient(app.config["EC2_API_URL"])
 
 @login_manager.user_loader
 def load_user(user_id):
-    """Load user from session or API"""
-    return User.get(user_id)
+    """Load user from session"""
+    # For session-based auth, create a simple user object
+    if user_id and "user_id" in session and session["user_id"] == user_id:
+        user_data = {
+            "id": session.get("user_id"),
+            "username": session.get("username"),
+            "role": session.get("user_role"),
+            "is_active": True
+        }
+        return User(user_data)
+    return None
 
 
 @app.route("/")
@@ -76,17 +87,30 @@ def login():
     form = LoginForm()
 
     if form.validate_on_submit():
-        # Try to authenticate with EC2 backend
-        try:
-            user_data = api_client.login(form.email.data, form.password.data)
-            if user_data:
-                # Create user session
-                session["user_id"] = user_data["id"]
-                session["user_type"] = user_data["user_type"]
+        # Try to authenticate with EC2 backend        try:
+            # Use username field, not email
+            user_data = api_client.login(
+                form.username.data, 
+                form.password.data, 
+                form.remember.data
+            )
+            if user_data and "token" in user_data:
+                # Store user info in session for Flask-Login
+                user_info = user_data["user"]
+                session["user_id"] = user_info["id"]
+                session["username"] = user_info["username"]
+                session["user_role"] = user_info["role"]
+                session["auth_token"] = user_data["token"]
+                session.permanent = form.remember.data
+
                 flash("Login successful!", "success")
                 return redirect(url_for("dashboard"))
             else:
-                flash("Invalid email or password", "error")
+                error_msg = (
+                    user_data.get("message", "Invalid username or password")
+                    if user_data else "Invalid username or password"
+                )
+                flash(error_msg, "error")
         except Exception as e:
             logger.error(f"Login error: {e}")
             flash("Login failed. Please try again.", "error")
@@ -103,17 +127,23 @@ def register():
         # Try to register with EC2 backend
         try:
             user_data = api_client.register(
+                username=form.username.data,
                 email=form.email.data,
                 password=form.password.data,
-                user_type=form.user_type.data,
-                first_name=form.first_name.data,
-                last_name=form.last_name.data,
+                role=form.role.data
+            )            success_check = (
+                user_data and "message" in user_data 
+                and "successful" in user_data["message"]
             )
-            if user_data:
+            if success_check:
                 flash("Registration successful! Please log in.", "success")
                 return redirect(url_for("login"))
             else:
-                flash("Registration failed. Please try again.", "error")
+                error_msg = (
+                    user_data.get("message", "Registration failed")
+                    if user_data else "Registration failed"
+                )
+                flash(error_msg, "error")
         except Exception as e:
             logger.error(f"Registration error: {e}")
             flash("Registration failed. Please try again.", "error")
