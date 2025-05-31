@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict
 
 from werkzeug.security import check_password_hash, generate_password_hash
 

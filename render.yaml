@@ -2,7 +2,7 @@ services:
   - type: web
     name: gigfusion-frontend
     env: python
-    repo: https://github.com/YOUR_USERNAME/gigfusion
+    repo: https://github.com/Vasudeva-bit/render
     buildCommand: pip install -r requirements_render.txt
     startCommand: gunicorn --bind 0.0.0.0:$PORT render_app:app
     plan: free
@@ -16,4 +16,24 @@ services:
         value: production
       - key: PYTHON_VERSION
         value: 3.9.7
+      - key: LOCAL_MODE
+        value: "False"
+      - key: AWS_ACCESS_KEY
+        value: YOUR_AWS_ACCESS_KEY
+      - key: AWS_SECRET_KEY
+        value: YOUR_AWS_SECRET_KEY
+      - key: AWS_REGION
+        value: us-east-1
+      - key: S3_BUCKET_NAME
+        value: gigfusion-files
+      - key: S3_VECTOR_BUCKET
+        value: gigfusion-vector-db
+      - key: RDS_ENDPOINT
+        value: gigfusion-mysql.ca5u6i2g6bg0.us-east-1.rds.amazonaws.com
+      - key: RDS_USERNAME
+        value: admin
+      - key: RDS_PASSWORD
+        value: YOUR_RDS_PASSWORD
+      - key: RDS_DATABASE
+        value: gigfusion
     healthCheckPath: /health
